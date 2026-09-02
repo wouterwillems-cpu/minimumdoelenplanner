@@ -42,14 +42,19 @@
   .col-toggle input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}
 
   table.plan{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);
-    border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+    border-radius:14px;overflow:hidden;box-shadow:var(--shadow);table-layout:fixed}
   table.plan thead th{background:#fbfcfe;text-align:left;font-size:11.5px;letter-spacing:.04em;
     text-transform:uppercase;color:var(--muted);padding:11px 12px;border-bottom:1px solid var(--line);font-weight:700}
   table.plan tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
   table.plan tbody tr:last-child td{border-bottom:none}
   table.plan tbody tr:hover{background:#fcfdff}
   col.c-klas{width:78px}col.c-periode{width:150px}col.c-thema{width:170px}
-  col.c-min{width:30%}col.c-go{width:30%}col.c-act{width:54px}
+  col.c-min{width:auto}col.c-go{width:auto}col.c-act{width:54px}
+  /* wanneer een kolom verborgen is, geven de minimumdoelen/GO!-kolommen die ruimte op */
+  table.plan.no-periode col.c-periode{width:0}
+  table.plan.no-thema col.c-thema{width:0}
+  table.plan.no-periode .col-periode{padding:0;border-left:0;border-right:0;overflow:hidden}
+  table.plan.no-thema .col-thema{padding:0;border-left:0;border-right:0;overflow:hidden}
 
   select.klas,input.cell{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 8px;
     font-size:13px;font-family:inherit;background:#fff}
@@ -161,14 +166,14 @@
     <button class="btn ghost danger sm" id="btnClear">Alles wissen</button>
   </div>
 
-  <table class="plan">
+  <table class="plan" id="planTable">
     <colgroup>
       <col class="c-klas"><col class="c-periode"><col class="c-thema">
       <col class="c-min"><col class="c-go"><col class="c-act">
     </colgroup>
     <thead>
       <tr>
-        <th>Klas</th><th id="thPeriode">Periode</th><th id="thThema">Thema</th>
+        <th>Klas</th><th id="thPeriode" class="col-periode">Periode</th><th id="thThema" class="col-thema">Thema</th>
         <th>Minimumdoelen</th><th>GO!-doelen</th><th></th>
       </tr>
     </thead>
@@ -57483,8 +57488,9 @@ function render(){
   document.getElementById('rowCount').textContent = state.rows.length + (state.rows.length===1?" rij":" rijen");
   empty.classList.toggle('hidden', state.rows.length>0);
   const showP = state.showPeriode!==false, showT = state.showThema!==false;
-  document.getElementById('thPeriode').hidden = !showP;
-  document.getElementById('thThema').hidden = !showT;
+  const tbl=document.getElementById('planTable');
+  tbl.classList.toggle('no-periode', !showP);
+  tbl.classList.toggle('no-thema', !showT);
   state.rows.forEach((row,idx)=>{
     const tr=document.createElement('tr');
 
@@ -57500,13 +57506,13 @@ function render(){
     const tdP=document.createElement('td');
     const ip=document.createElement('input'); ip.className='cell'; ip.placeholder='bv. Sept–Okt';
     ip.value=row.periode||""; ip.oninput=()=>{row.periode=ip.value;save();};
-    tdP.appendChild(ip); tdP.hidden=!showP; tr.appendChild(tdP);
+    tdP.className='col-periode'; tdP.appendChild(ip); tr.appendChild(tdP);
 
     // Thema
     const tdT=document.createElement('td');
     const it=document.createElement('textarea'); it.className='cell'; it.placeholder='bv. Herfst';
     it.value=row.thema||""; it.oninput=()=>{row.thema=it.value;save();};
-    tdT.appendChild(it); tdT.hidden=!showT; tr.appendChild(tdT);
+    tdT.className='col-thema'; tdT.appendChild(it); tr.appendChild(tdT);
 
     // Minimumdoelen
     tr.appendChild(doelCell(row,'min'));
