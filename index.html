@@ -35,6 +35,11 @@
   .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
   .meta input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit}
   .count-pill{background:#eef1f6;color:var(--muted);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600}
+  .col-toggles{display:inline-flex;align-items:center;gap:10px;background:#f6f8fb;border:1px solid var(--line);
+    border-radius:9px;padding:5px 10px}
+  .col-toggles-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .col-toggle{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer}
+  .col-toggle input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}
 
   table.plan{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);
     border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
@@ -146,6 +151,11 @@
   <div class="toolbar">
     <span class="meta"><input id="planTitle" placeholder="Naam van deze planning (bv. Meester Tom – L2 – 2025-2026)"></span>
     <button class="btn primary" id="btnAddRow">+ Nieuwe rij</button>
+    <span class="col-toggles">
+      <span class="col-toggles-lbl">Kolommen:</span>
+      <label class="col-toggle"><input type="checkbox" id="tgPeriode"> Periode</label>
+      <label class="col-toggle"><input type="checkbox" id="tgThema"> Thema</label>
+    </span>
     <div class="spacer"></div>
     <span class="count-pill" id="rowCount">0 rijen</span>
     <button class="btn ghost danger sm" id="btnClear">Alles wissen</button>
@@ -158,7 +168,7 @@
     </colgroup>
     <thead>
       <tr>
-        <th>Klas</th><th>Periode</th><th>Thema</th>
+        <th>Klas</th><th id="thPeriode">Periode</th><th id="thThema">Thema</th>
         <th>Minimumdoelen</th><th>GO!-doelen</th><th></th>
       </tr>
     </thead>
@@ -57472,6 +57482,9 @@ function render(){
   document.getElementById('planTitle').value = state.title||"";
   document.getElementById('rowCount').textContent = state.rows.length + (state.rows.length===1?" rij":" rijen");
   empty.classList.toggle('hidden', state.rows.length>0);
+  const showP = state.showPeriode!==false, showT = state.showThema!==false;
+  document.getElementById('thPeriode').hidden = !showP;
+  document.getElementById('thThema').hidden = !showT;
   state.rows.forEach((row,idx)=>{
     const tr=document.createElement('tr');
 
@@ -57487,13 +57500,13 @@ function render(){
     const tdP=document.createElement('td');
     const ip=document.createElement('input'); ip.className='cell'; ip.placeholder='bv. Sept–Okt';
     ip.value=row.periode||""; ip.oninput=()=>{row.periode=ip.value;save();};
-    tdP.appendChild(ip); tr.appendChild(tdP);
+    tdP.appendChild(ip); tdP.hidden=!showP; tr.appendChild(tdP);
 
     // Thema
     const tdT=document.createElement('td');
     const it=document.createElement('textarea'); it.className='cell'; it.placeholder='bv. Herfst';
     it.value=row.thema||""; it.oninput=()=>{row.thema=it.value;save();};
-    tdT.appendChild(it); tr.appendChild(tdT);
+    tdT.appendChild(it); tdT.hidden=!showT; tr.appendChild(tdT);
 
     // Minimumdoelen
     tr.appendChild(doelCell(row,'min'));
@@ -57569,8 +57582,10 @@ function openPicker(row,type){
   // alle doelen die ergens in de hele planning al gebruikt zijn (van dit type)
   const usedIds=new Set();
   state.rows.forEach(r=>(r[type]||[]).forEach(id=>usedIds.add(id)));
+  // bij het kiezen van GO!-doelen: meteen het vak van de gekozen minimumdoel(en) tonen
+  const initVak = type==='go' ? Object.keys(selMinKeysByVak)[0] : undefined;
   pickerCtx={row,type,selected:new Set(row[type]),
-    klasAge:KLAS_LEEFTIJD[row.klas]||null, selMinKeysByVak, usedIds, showAll:false};
+    klasAge:KLAS_LEEFTIJD[row.klas]||null, selMinKeysByVak, usedIds, showAll:false, initVak};
   buildPicker();
 }
 function buildPicker(){
@@ -57605,8 +57620,11 @@ function buildPicker(){
     if(!has) return;
     const op=document.createElement('option');op.value=v.code;op.textContent=v.naam;vakSel.appendChild(op);
   });
-  // restore last vak
-  if(pickerCtx.lastVak) vakSel.value=pickerCtx.lastVak;
+  // voorkeur-vak: eerder gekozen vak, of (bij GO!-doelen) het vak van de gekozen minimumdoelen
+  const wantVak = pickerCtx.lastVak || pickerCtx.initVak;
+  if(wantVak && DB.vakken.some(v=>v.code===wantVak &&
+      v.onderdelen.some(o=>(isMin?o.minimumdoelen:o.go_doelen).length>0)))
+    vakSel.value=wantVak;
   const search=bg.querySelector('#pkSearch');
   function updateNotice(){
     const el=bg.querySelector('#pkFilterNotice'); if(!el) return;
@@ -57728,6 +57746,13 @@ document.getElementById('btnClear').onclick=()=>{
 };
 document.getElementById('btnPrint').onclick=()=>window.print();
 
+document.getElementById('tgPeriode').onchange=e=>{state.showPeriode=e.target.checked;save();render();};
+document.getElementById('tgThema').onchange=e=>{state.showThema=e.target.checked;save();render();};
+function syncColToggles(){
+  document.getElementById('tgPeriode').checked = state.showPeriode!==false;
+  document.getElementById('tgThema').checked = state.showThema!==false;
+}
+
 document.getElementById('btnExport').onclick=()=>{
   const data={app:"minimumdoelen-planning",versie:1,geexporteerd:new Date().toISOString(),
     title:state.title,rows:state.rows};
@@ -57771,6 +57796,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 /* ---- init ---- */
 load();
 if(state.rows.length===0) state.rows.push(newRow());
+syncColToggles();
 render();
 </script>
 </body>
