@@ -57463,7 +57463,8 @@ for(const v of DB.vakken){
     }
     for(const g of o.go_doelen){
       DOEL_INDEX[g.id] = {type:'go', vak:v.naam, vakcode:v.code, onderdeel:o.naam,
-        nummer:(g.go_nrs||[]).join(', '), tekst:g.tekst, leeftijden:g.leeftijden};
+        nummer:(g.go_nrs||[]).join(', '), tekst:g.tekst, leeftijden:g.leeftijden,
+        min_refs:g.min_refs};
     }
   }
 }
@@ -57591,13 +57592,20 @@ function openPicker(row,type){
   const selMinKeysByVak={};
   (row.min||[]).forEach(id=>{const d=DOEL_INDEX[id];
     if(d){(selMinKeysByVak[d.vakcode]=selMinKeysByVak[d.vakcode]||new Set()).add(d.matchkey);}});
+  // gekozen GO!-doelen van DEZE rij → hun gekoppelde minimumdoelen (matchkeys), per vak
+  // (voor de omgekeerde filter: minimumdoelen tonen die bij de gekozen GO!-doelen horen)
+  const selGoRefsByVak={};
+  (row.go||[]).forEach(id=>{const d=DOEL_INDEX[id];
+    if(d){const s=(selGoRefsByVak[d.vakcode]=selGoRefsByVak[d.vakcode]||new Set());
+      (d.min_refs||[]).forEach(r=>s.add(r));}});
   // alle doelen die ergens in de hele planning al gebruikt zijn (van dit type)
   const usedIds=new Set();
   state.rows.forEach(r=>(r[type]||[]).forEach(id=>usedIds.add(id)));
-  // bij het kiezen van GO!-doelen: meteen het vak van de gekozen minimumdoel(en) tonen
-  const initVak = type==='go' ? Object.keys(selMinKeysByVak)[0] : undefined;
+  // meteen het gekoppelde vak tonen: bij GO! het vak van de minimumdoelen,
+  // bij minimumdoelen het vak van de gekozen GO!-doelen
+  const initVak = type==='go' ? Object.keys(selMinKeysByVak)[0] : Object.keys(selGoRefsByVak)[0];
   pickerCtx={row,type,selected:new Set(row[type]),
-    klasAge:KLAS_LEEFTIJD[row.klas]||null, selMinKeysByVak, usedIds, showAll:false, initVak};
+    klasAge:KLAS_LEEFTIJD[row.klas]||null, selMinKeysByVak, selGoRefsByVak, usedIds, showAll:false, initVak};
   buildPicker();
 }
 function buildPicker(){
@@ -57647,6 +57655,10 @@ function buildPicker(){
       const selKeys=pickerCtx.selMinKeysByVak[vakcode];
       if(selKeys&&selKeys.size) parts.push(`en <b>${selKeys.size} gekozen minimumdoel(en)</b>`);
       else parts.push(`— <i>kies eerst minimumdoelen om verder te verfijnen</i>`);
+    }else{
+      const selRefs=pickerCtx.selGoRefsByVak[vakcode];
+      const nGo=(pickerCtx.row.go||[]).filter(id=>{const d=DOEL_INDEX[id];return d&&d.vakcode===vakcode;}).length;
+      if(nGo && selRefs && selRefs.size) parts.push(`en <b>${nGo} gekozen GO!-doel(en)</b>`);
     }
     el.innerHTML=`<span>${parts.join(' ')}</span>
       <label class="pk-toggle" style="margin-left:auto">
@@ -57677,6 +57689,7 @@ function renderPickerBody(bg,vakcode,q){
   const body=bg.querySelector('#pkBody'); body.innerHTML="";
   const ql=(q||"").trim().toLowerCase();
   const selKeys = isMin ? null : pickerCtx.selMinKeysByVak[vakcode];
+  const selGoRefs = isMin ? pickerCtx.selGoRefsByVak[vakcode] : null;
   let shown=0, hiddenByFilter=0;
   vak.onderdelen.forEach(o=>{
     const items=(isMin?o.minimumdoelen:o.go_doelen).filter(d=>{
@@ -57696,6 +57709,11 @@ function renderPickerBody(bg,vakcode,q){
         if(!isMin && selKeys && selKeys.size){
           const refs=d.min_refs||[];
           if(!refs.some(r=>selKeys.has(r))){ hiddenByFilter++; return false; }
+        }
+        // omgekeerde koppeling: bij minimumdoelen, enkel tonen wat bij de
+        // gekozen GO!-doelen van dit vak hoort
+        if(isMin && selGoRefs && selGoRefs.size){
+          if(!selGoRefs.has(d.matchkey)){ hiddenByFilter++; return false; }
         }
       }
       return true;
@@ -57739,7 +57757,7 @@ function renderPickerBody(bg,vakcode,q){
   if(shown===0){
     const e=document.createElement('div');e.className='empty-cell';e.style.padding='24px 0';
     if(hiddenByFilter>0 && !showAll){
-      e.innerHTML='Geen doelen die passen bij de'+(isMin?' klas':' klas/minimumdoel')+'-filter'+(ql?' en "'+q+'"':'')+
+      e.innerHTML='Geen doelen die passen bij de'+(isMin?' klas/GO!-doel':' klas/minimumdoel')+'-filter'+(ql?' en "'+q+'"':'')+
         '.<br>Zet <b>“Toon alle doelen”</b> aan om alle doelen te zien.';
     }else{
       e.textContent='Geen doelen gevonden'+(ql?' voor "'+q+'"':'')+'.';
