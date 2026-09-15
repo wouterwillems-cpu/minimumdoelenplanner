@@ -40,12 +40,6 @@
   .col-toggles-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .col-toggle{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer}
   .col-toggle input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}
-  .auto-toggle{cursor:pointer;align-items:center}
-  .auto-toggle input{width:16px;height:16px;accent-color:var(--go);cursor:pointer}
-  .auto-toggle .lbl{font-size:12.5px;font-weight:600;color:var(--ink)}
-  .auto-toggle .lbl b{color:var(--go);font-weight:800}
-  .chip .auto-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.03em;color:#fff;
-    background:var(--go);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
 
   table.plan{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);
     border-radius:14px;overflow:hidden;box-shadow:var(--shadow);table-layout:fixed}
@@ -54,14 +48,13 @@
   table.plan tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
   table.plan tbody tr:last-child td{border-bottom:none}
   table.plan tbody tr:hover{background:#fcfdff}
-  col.c-klas{width:78px}col.c-periode{width:150px}col.c-thema{width:170px}col.c-les{width:200px}
-  col.c-min{width:auto}col.c-go{width:auto}col.c-act{width:54px}
+  col.c-klas{width:78px}col.c-periode{width:150px}col.c-thema{width:170px}
+  col.c-min{width:auto}col.c-go{width:auto}col.c-opm{width:180px}col.c-act{width:54px}
   /* wanneer een kolom verborgen is, geven de minimumdoelen/GO!-kolommen die ruimte op */
   table.plan.no-periode col.c-periode{width:0}
   table.plan.no-thema col.c-thema{width:0}
-  table.plan.no-thema col.c-les{width:0}
   table.plan.no-periode .col-periode{padding:0;border-left:0;border-right:0;overflow:hidden}
-  table.plan.no-thema .col-thema,table.plan.no-thema .col-les{padding:0;border-left:0;border-right:0;overflow:hidden}
+  table.plan.no-thema .col-thema{padding:0;border-left:0;border-right:0;overflow:hidden}
 
   select.klas,input.cell{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 8px;
     font-size:13px;font-family:inherit;background:#fff}
@@ -146,19 +139,7 @@
     body{background:#fff}main{padding:0;max-width:none}
     table.plan{box-shadow:none;border:1px solid #bbb}
     .chip{background:#fff!important}
-    .toast{display:none!important}
-    /* PDF-modus: enkel het opgemaakte document tonen */
-    body.printing main,body.printing header.app{display:none!important}
-    body.printing .print-doc{display:block!important}
-    @page{size:A4 landscape;margin:12mm}
   }
-  .print-doc{display:none}
-  .print-doc h1{font-size:17px;margin:0 0 3px;color:#235539}
-  .print-doc .sub{font-size:11px;color:#555;margin:0 0 12px}
-  .print-doc table{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed}
-  .print-doc th,.print-doc td{border:1px solid #b5bdc7;padding:5px 7px;text-align:left;vertical-align:top;word-wrap:break-word}
-  .print-doc thead th{background:#2f6f4f;color:#fff;font-weight:700}
-  .print-doc tbody tr{page-break-inside:avoid}
 </style>
 </head>
 <body>
@@ -167,8 +148,6 @@
   <div class="spacer"></div>
   <button class="btn" id="btnImport">⬆︎ Importeer JSON</button>
   <button class="btn" id="btnExport">⬇︎ Exporteer JSON</button>
-  <button class="btn" id="btnExcel">⬇︎ Excel</button>
-  <button class="btn" id="btnPdf">⬇︎ PDF</button>
   <button class="btn" id="btnPrint">🖨︎ Afdrukken</button>
   <input type="file" id="fileInput" accept="application/json,.json" class="hidden">
 </header>
@@ -182,10 +161,6 @@
       <label class="col-toggle"><input type="checkbox" id="tgPeriode"> Periode</label>
       <label class="col-toggle"><input type="checkbox" id="tgThema"> Thema</label>
     </span>
-    <label class="col-toggles auto-toggle" title="Wanneer aan: kies je GO!-doelen, dan worden de bijhorende minimumdoel(en) automatisch toegevoegd.">
-      <input type="checkbox" id="tgAutoMin">
-      <span class="lbl"><b>GO!-doelen → minimumdoelen</b> automatisch koppelen</span>
-    </label>
     <div class="spacer"></div>
     <span class="count-pill" id="rowCount">0 rijen</span>
     <button class="btn ghost danger sm" id="btnClear">Alles wissen</button>
@@ -193,13 +168,13 @@
 
   <table class="plan" id="planTable">
     <colgroup>
-      <col class="c-klas"><col class="c-periode"><col class="c-thema"><col class="c-les">
-      <col class="c-min"><col class="c-go"><col class="c-act">
+      <col class="c-klas"><col class="c-periode"><col class="c-thema">
+      <col class="c-min"><col class="c-go"><col class="c-opm"><col class="c-act">
     </colgroup>
     <thead>
       <tr>
-        <th>Klas</th><th id="thPeriode" class="col-periode">Periode</th><th id="thThema" class="col-thema">Thema</th><th id="thLes" class="col-les">Lesactiviteit</th>
-        <th>Minimumdoelen</th><th>GO!-doelen</th><th></th>
+        <th>Klas</th><th id="thPeriode" class="col-periode">Periode</th><th id="thThema" class="col-thema">Thema</th>
+        <th>Minimumdoelen</th><th>GO!-doelen</th><th>Opmerkingen</th><th></th>
       </tr>
     </thead>
     <tbody id="planBody"></tbody>
@@ -57488,46 +57463,15 @@ for(const v of DB.vakken){
     }
     for(const g of o.go_doelen){
       DOEL_INDEX[g.id] = {type:'go', vak:v.naam, vakcode:v.code, onderdeel:o.naam,
-        nummer:(g.go_nrs||[]).join(', '), tekst:g.tekst, leeftijden:g.leeftijden, min_refs:g.min_refs||[]};
+        nummer:(g.go_nrs||[]).join(', '), tekst:g.tekst, leeftijden:g.leeftijden};
     }
   }
-}
-
-/* ---- omgekeerde koppeling: matchkey (per vak) -> minimumdoel-id ---- */
-const MIN_BY_KEY={}; // "vakcode|niveau:nummer" -> min id
-for(const v of DB.vakken){ for(const o of v.onderdelen){ for(const m of o.minimumdoelen){
-  MIN_BY_KEY[v.code+'|'+m.matchkey]=m.id;
-}}}
-function minIdsForGo(goId){
-  const d=DOEL_INDEX[goId]; if(!d||d.type!=='go') return [];
-  const out=[];
-  (d.min_refs||[]).forEach(r=>{ const id=MIN_BY_KEY[d.vakcode+'|'+r]; if(id) out.push(id); });
-  return out;
-}
-/* Synchroniseert de automatisch-gekoppelde minimumdoelen van een rij met de gekozen GO!-doelen.
-   Handmatig gekozen minimumdoelen blijven altijd behouden. */
-function syncAutoMin(row){
-  const linked=new Set();
-  (row.go||[]).forEach(gid=>minIdsForGo(gid).forEach(mid=>linked.add(mid)));
-  const oldAuto=new Set(row.autoMin||[]);
-  const minSet=new Set(row.min||[]);
-  let added=0, removed=0;
-  // verwijder vroeger auto-toegevoegde minimumdoelen die nergens meer gekoppeld zijn
-  oldAuto.forEach(mid=>{ if(!linked.has(mid) && minSet.has(mid)){ minSet.delete(mid); removed++; } });
-  const newAuto=new Set();
-  linked.forEach(mid=>{
-    if(minSet.has(mid)){ if(oldAuto.has(mid)) newAuto.add(mid); /* anders: handmatig, blijft handmatig */ }
-    else { minSet.add(mid); newAuto.add(mid); added++; }
-  });
-  row.min=Array.from(minSet);
-  row.autoMin=Array.from(newAuto);
-  return {added,removed};
 }
 
 /* ---- state ---- */
 let state = { title:"", rows:[] };
 const LS_KEY = "minimumdoelen_planning_v1";
-function newRow(){ return { id:crypto.randomUUID(), klas:"L1", periode:"", thema:"", lesactiviteit:"", min:[], go:[], autoMin:[] }; }
+function newRow(){ return { id:crypto.randomUUID(), klas:"L1", periode:"", thema:"", min:[], go:[], opmerking:"" }; }
 
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
 function load(){
@@ -57570,16 +57514,16 @@ function render(){
     it.value=row.thema||""; it.oninput=()=>{row.thema=it.value;save();};
     tdT.className='col-thema'; tdT.appendChild(it); tr.appendChild(tdT);
 
-    // Lesactiviteit (gekoppeld aan de Thema-kolom)
-    const tdL=document.createElement('td');
-    const il=document.createElement('textarea'); il.className='cell'; il.placeholder='bv. Knutselen met herfstbladeren';
-    il.value=row.lesactiviteit||""; il.oninput=()=>{row.lesactiviteit=il.value;save();};
-    tdL.className='col-les'; tdL.appendChild(il); tr.appendChild(tdL);
-
     // Minimumdoelen
     tr.appendChild(doelCell(row,'min'));
     // GO doelen
     tr.appendChild(doelCell(row,'go'));
+
+    // Opmerkingen
+    const tdO=document.createElement('td');
+    const io=document.createElement('textarea'); io.className='cell'; io.placeholder='Vrije notitie…';
+    io.value=row.opmerking||""; io.oninput=()=>{row.opmerking=io.value;save();};
+    tdO.appendChild(io); tr.appendChild(tdO);
 
     // Acties
     const tdA=document.createElement('td');
@@ -57620,14 +57564,8 @@ function doelCell(row,type){
       txt.appendChild(head);
       txt.appendChild(document.createTextNode(d.tekst));
     }else{ txt.textContent='(onbekend doel: '+id+')'; }
-    if(type==='min' && (row.autoMin||[]).includes(id)){
-      const ab=document.createElement('span'); ab.className='auto-badge'; ab.textContent='↩︎ auto';
-      ab.title='Automatisch toegevoegd via een gekozen GO!-doel'; txt.appendChild(ab);
-    }
     const x=document.createElement('button'); x.className='x'; x.textContent='×'; x.title='Verwijderen';
-    x.onclick=()=>{row[type]=row[type].filter(i=>i!==id);
-      if(type==='min' && row.autoMin) row.autoMin=row.autoMin.filter(i=>i!==id);
-      save();render();};
+    x.onclick=()=>{row[type]=row[type].filter(i=>i!==id);save();render();};
     chip.append(tag,txt,x); chips.appendChild(chip);
   });
   td.appendChild(chips);
@@ -57659,8 +57597,7 @@ function openPicker(row,type){
   // bij het kiezen van GO!-doelen: meteen het vak van de gekozen minimumdoel(en) tonen
   const initVak = type==='go' ? Object.keys(selMinKeysByVak)[0] : undefined;
   pickerCtx={row,type,selected:new Set(row[type]),
-    klasAge:KLAS_LEEFTIJD[row.klas]||null, selMinKeysByVak, usedIds, showAll:false, initVak,
-    reverse:(type==='go' && state.autoMinFromGo!==false)};
+    klasAge:KLAS_LEEFTIJD[row.klas]||null, selMinKeysByVak, usedIds, showAll:false, initVak};
   buildPicker();
 }
 function buildPicker(){
@@ -57707,14 +57644,9 @@ function buildPicker(){
     const klas=pickerCtx.row.klas, age=pickerCtx.klasAge;
     let parts=[`Gefilterd op <span class="klas-pill">${klas}</span> (${age} jr)`];
     if(!isMin){
-      if(pickerCtx.reverse){
-        parts=[`Gefilterd op <span class="klas-pill">${klas}</span> (${age} jr). `+
-          `<b>Automatisch koppelen staat aan</b> — de gekozen GO!-doelen zetten zelf de bijhorende minimumdoel(en) erbij.`];
-      }else{
-        const selKeys=pickerCtx.selMinKeysByVak[vakcode];
-        if(selKeys&&selKeys.size) parts.push(`en <b>${selKeys.size} gekozen minimumdoel(en)</b>`);
-        else parts.push(`— <i>kies eerst minimumdoelen om verder te verfijnen</i>`);
-      }
+      const selKeys=pickerCtx.selMinKeysByVak[vakcode];
+      if(selKeys&&selKeys.size) parts.push(`en <b>${selKeys.size} gekozen minimumdoel(en)</b>`);
+      else parts.push(`— <i>kies eerst minimumdoelen om verder te verfijnen</i>`);
     }
     el.innerHTML=`<span>${parts.join(' ')}</span>
       <label class="pk-toggle" style="margin-left:auto">
@@ -57729,18 +57661,7 @@ function buildPicker(){
   bg.querySelector('#pkCancel').onclick=closePicker;
   bg.querySelector('#pkOk').onclick=()=>{
     pickerCtx.row[pickerCtx.type]=Array.from(pickerCtx.selected);
-    let msg=null;
-    if(pickerCtx.type==='go' && state.autoMinFromGo!==false){
-      const r=syncAutoMin(pickerCtx.row);
-      if(r.added||r.removed){
-        const p=[];
-        if(r.added) p.push(r.added+' minimumdoel(en) automatisch toegevoegd');
-        if(r.removed) p.push(r.removed+' verwijderd');
-        msg='🔗 '+p.join(', ');
-      }
-    }
     closePicker();save();render();
-    if(msg) toast(msg);
   };
   bg.onclick=e=>{if(e.target===bg)closePicker();};
   rb(); updateInfo(bg);
@@ -57772,7 +57693,7 @@ function renderPickerBody(bg,vakcode,q){
         }
         // minimumdoel-koppeling: enkel voor GO!-doelen, en enkel als er
         // minimumdoelen van dit vak gekozen zijn in de rij
-        if(!isMin && !pickerCtx.reverse && selKeys && selKeys.size){
+        if(!isMin && selKeys && selKeys.size){
           const refs=d.min_refs||[];
           if(!refs.some(r=>selKeys.has(r))){ hiddenByFilter++; return false; }
         }
@@ -57839,150 +57760,14 @@ document.getElementById('btnPrint').onclick=()=>window.print();
 
 document.getElementById('tgPeriode').onchange=e=>{state.showPeriode=e.target.checked;save();render();};
 document.getElementById('tgThema').onchange=e=>{state.showThema=e.target.checked;save();render();};
-document.getElementById('tgAutoMin').onchange=e=>{
-  state.autoMinFromGo=e.target.checked;
-  if(e.target.checked){ state.rows.forEach(r=>syncAutoMin(r)); }
-  save();render();
-  toast(e.target.checked?'🔗 Automatisch koppelen aan':'Automatisch koppelen uit');
-};
 function syncColToggles(){
   document.getElementById('tgPeriode').checked = state.showPeriode!==false;
   document.getElementById('tgThema').checked = state.showThema!==false;
-  document.getElementById('tgAutoMin').checked = state.autoMinFromGo!==false;
 }
-
-/* ===== Export naar Excel (.xlsx) en PDF ===== */
-function _xlEsc(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function _strBytes(x){return new TextEncoder().encode(x);}
-function _u16(n){return [n&0xFF,(n>>>8)&0xFF];}
-function _u32(n){return [n&0xFF,(n>>>8)&0xFF,(n>>>16)&0xFF,(n>>>24)&0xFF];}
-function _crc32(bytes){let c,crc=0xFFFFFFFF;
-  if(!_crc32.t){_crc32.t=[];for(let n=0;n<256;n++){c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;_crc32.t[n]=c>>>0;}}
-  for(let i=0;i<bytes.length;i++)crc=(crc>>>8)^_crc32.t[(crc^bytes[i])&0xFF];return (crc^0xFFFFFFFF)>>>0;}
-function _zip(files){const chunks=[];let offset=0;const recs=[];
-  const push=arr=>{const b=Uint8Array.from(arr);chunks.push(b);offset+=b.length;};
-  const pushB=b=>{chunks.push(b);offset+=b.length;};
-  for(const f of files){const nameB=_strBytes(f.name),crc=_crc32(f.data),sz=f.data.length,localOff=offset;
-    push([].concat(_u32(0x04034b50),_u16(20),_u16(0),_u16(0),_u16(0),_u16(0),_u32(crc),_u32(sz),_u32(sz),_u16(nameB.length),_u16(0)));
-    pushB(nameB);pushB(f.data);recs.push({nameB,crc,sz,localOff});}
-  const cdStart=offset;
-  for(const r of recs){push([].concat(_u32(0x02014b50),_u16(20),_u16(20),_u16(0),_u16(0),_u16(0),_u16(0),_u32(r.crc),_u32(r.sz),_u32(r.sz),
-    _u16(r.nameB.length),_u16(0),_u16(0),_u16(0),_u16(0),_u32(0),_u32(r.localOff)));pushB(r.nameB);}
-  const cdSize=offset-cdStart;
-  push([].concat(_u32(0x06054b50),_u16(0),_u16(0),_u16(recs.length),_u16(recs.length),_u32(cdSize),_u32(cdStart),_u16(0)));
-  let total=0;chunks.forEach(c=>total+=c.length);const out=new Uint8Array(total);let p=0;chunks.forEach(c=>{out.set(c,p);p+=c.length;});return out;}
-function buildXlsx(title,headers,rows,colWidths){
-  const CT=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-<Default Extension="xml" ContentType="application/xml"/>
-<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-</Types>`;
-  const RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>`;
-  const WB=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<sheets><sheet name="Planning" sheetId="1" r:id="rId1"/></sheets>
-</workbook>`;
-  const WBR=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-</Relationships>`;
-  const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><sz val="11"/><name val="Calibri"/></font></fonts>
-<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2F6F4F"/><bgColor indexed="64"/></patternFill></fill></fills>
-<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD0D7DE"/></left><right style="thin"><color rgb="FFD0D7DE"/></right><top style="thin"><color rgb="FFD0D7DE"/></top><bottom style="thin"><color rgb="FFD0D7DE"/></bottom><diagonal/></border></borders>
-<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="4">
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
-<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
-<xf numFmtId="0" fontId="3" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
-</cellXfs></styleSheet>`;
-  function colName(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
-  function cell(r,c,val,style){return `<c r="${colName(c)}${r}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${_xlEsc(val)}</t></is></c>`;}
-  let rn=1;const xr=[];
-  xr.push(`<row r="${rn}">${cell(rn,0,title||'Planning',1)}</row>`);rn++;rn++;
-  xr.push(`<row r="${rn}" ht="20" customHeight="1">`+headers.map((h,i)=>cell(rn,i,h,2)).join('')+`</row>`);rn++;
-  for(const row of rows){xr.push(`<row r="${rn}">`+row.map((v,i)=>cell(rn,i,v,3)).join('')+`</row>`);rn++;}
-  const cols=colWidths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
-  const SHEET=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
-<cols>${cols}</cols><sheetData>${xr.join('')}</sheetData></worksheet>`;
-  return _zip([
-    {name:'[Content_Types].xml',data:_strBytes(CT)},
-    {name:'_rels/.rels',data:_strBytes(RELS)},
-    {name:'xl/workbook.xml',data:_strBytes(WB)},
-    {name:'xl/_rels/workbook.xml.rels',data:_strBytes(WBR)},
-    {name:'xl/styles.xml',data:_strBytes(STYLES)},
-    {name:'xl/worksheets/sheet1.xml',data:_strBytes(SHEET)},
-  ]);
-}
-/* welke kolommen exporteren (volgt de kolomschakelaars) + celwaarden */
-function _doelText(id){const d=DOEL_INDEX[id];if(!d)return '(onbekend doel)';
-  const nr=d.type==='min'?((d.niveau?d.niveau+' ':'')+(d.nummer||'')).trim():(d.nummer||'');
-  return d.vak+(nr?' · '+nr:'')+' — '+(d.tekst||'');}
-function exportMatrix(){
-  const showP=state.showPeriode!==false, showT=state.showThema!==false;
-  const cols=[{k:'klas',label:'Klas',w:8}];
-  if(showP) cols.push({k:'periode',label:'Periode',w:16});
-  if(showT){cols.push({k:'thema',label:'Thema',w:22});cols.push({k:'les',label:'Lesactiviteit',w:26});}
-  cols.push({k:'min',label:'Minimumdoelen',w:52});
-  cols.push({k:'go',label:'GO!-doelen',w:52});
-  const val=(r,k)=> k==='klas'?(r.klas||''): k==='periode'?(r.periode||''): k==='thema'?(r.thema||''):
-    k==='les'?(r.lesactiviteit||''): k==='min'?(r.min||[]).map(_doelText).join('\n'):
-    k==='go'?(r.go||[]).map(_doelText).join('\n'):'';
-  return {headers:cols.map(c=>c.label), widths:cols.map(c=>c.w),
-    rows:state.rows.map(r=>cols.map(c=>val(r,c.k)))};
-}
-function _safeName(){return (state.title||'planning').replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'').toLowerCase()||'planning';}
-
-document.getElementById('btnExcel').onclick=()=>{
-  const {headers,widths,rows}=exportMatrix();
-  if(rows.length===0){toast('Nog geen rijen om te exporteren');return;}
-  const buf=buildXlsx(state.title||'Planning',headers,rows,widths);
-  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='minimumdoelen_'+_safeName()+'.xlsx';a.click();URL.revokeObjectURL(a.href);
-  toast('Excel gedownload ✓');
-};
-document.getElementById('btnPdf').onclick=()=>{
-  const {headers,rows}=exportMatrix();
-  if(rows.length===0){toast('Nog geen rijen om te exporteren');return;}
-  const doc=document.createElement('div');doc.className='print-doc';doc.id='printDoc';
-  const h=document.createElement('h1');h.textContent=state.title||'Planning';doc.appendChild(h);
-  const meta=document.createElement('div');meta.className='sub';
-  meta.textContent=state.rows.length+(state.rows.length===1?' rij':' rijen')+' · afgedrukt op '+new Date().toLocaleDateString('nl-BE');
-  doc.appendChild(meta);
-  const tbl=document.createElement('table');
-  const thead=document.createElement('thead');const htr=document.createElement('tr');
-  headers.forEach(x=>{const th=document.createElement('th');th.textContent=x;htr.appendChild(th);});
-  thead.appendChild(htr);tbl.appendChild(thead);
-  const tb=document.createElement('tbody');
-  rows.forEach(r=>{const tr=document.createElement('tr');
-    r.forEach(v=>{const td=document.createElement('td');
-      String(v).split('\n').forEach((line,i)=>{if(i)td.appendChild(document.createElement('br'));td.appendChild(document.createTextNode(line));});
-      tr.appendChild(td);});
-    tb.appendChild(tr);});
-  tbl.appendChild(tb);doc.appendChild(tbl);document.body.appendChild(doc);
-  document.body.classList.add('printing');
-  let done=false;const cleanup=()=>{if(done)return;done=true;
-    document.body.classList.remove('printing');doc.remove();window.removeEventListener('afterprint',cleanup);};
-  window.addEventListener('afterprint',cleanup);
-  setTimeout(()=>{window.print();},60);
-  setTimeout(cleanup,60000);
-};
 
 document.getElementById('btnExport').onclick=()=>{
   const data={app:"minimumdoelen-planning",versie:1,geexporteerd:new Date().toISOString(),
-    title:state.title,autoMinFromGo:state.autoMinFromGo!==false,rows:state.rows};
+    title:state.title,rows:state.rows};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   const safe=(state.title||'planning').replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'').toLowerCase()||'planning';
@@ -58001,11 +57786,10 @@ document.getElementById('fileInput').onchange=e=>{
       const clean=rows.map(x=>({
         id:x.id||crypto.randomUUID(),
         klas:KLASSEN.includes(x.klas)?x.klas:'L1',
-        periode:x.periode||'',thema:x.thema||'',lesactiviteit:x.lesactiviteit||'',
+        periode:x.periode||'',thema:x.thema||'',
         min:Array.isArray(x.min)?x.min:[],go:Array.isArray(x.go)?x.go:[],
-        autoMin:Array.isArray(x.autoMin)?x.autoMin:[]
+        opmerking:x.opmerking||''
       }));
-      if(typeof d.autoMinFromGo==='boolean') state.autoMinFromGo=d.autoMinFromGo;
       if(state.rows.length>0 && !confirm('Huidige planning vervangen door geïmporteerde planning?\n(Annuleer om de rijen toe te voegen i.p.v. vervangen.)')){
         state.rows=state.rows.concat(clean);
       }else{
